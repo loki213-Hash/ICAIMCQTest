@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Adv. ITT — Python Live Quiz</title>
+<style>
+  :root{
+    --paper:#F7F3EA;
+    --paper-line:#E4DCC8;
+    --ink:#1E2A33;
+    --ink-soft:#4B5A63;
+    --brass:#9C7A2E;
+    --brass-soft:#C9A54B;
+    --ok:#2F6E4F;
+    --ok-bg:#E4F0E9;
+    --bad:#A8402F;
+    --bad-bg:#F6E4DF;
+    --card:#FFFFFF;
+    --shadow: 0 1px 2px rgba(30,42,51,.06), 0 8px 24px rgba(30,42,51,.08);
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(transparent, transparent 27px, var(--paper-line) 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* ---------- HEADER / MASTHEAD ---------- */
+  .masthead{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    border-bottom:3px double var(--ink);
+    padding-bottom:14px;margin-bottom:20px;
+    flex-wrap:wrap;gap:10px;
+  }
+  .masthead-left{max-width:640px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    color:var(--brass);text-transform:uppercase;margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--serif);font-weight:700;font-size:30px;margin:0;
+    letter-spacing:.2px;
+  }
+  .subtitle{font-family:var(--serif);font-style:italic;color:var(--ink-soft);margin:6px 0 0;font-size:15px;}
+  .seal{
+    width:74px;height:74px;border-radius:50%;
+    border:2px solid var(--brass);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-weight:700;color:var(--brass);
+    font-size:11px;text-align:center;line-height:1.25;letter-spacing:.05em;
+    flex:0 0 auto;
+    background:
+      repeating-conic-gradient(from 0deg, rgba(156,122,46,.08) 0deg 6deg, transparent 6deg 12deg);
+  }
+
+  /* ---------- SCREENS ---------- */
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- START SCREEN ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--paper-line);
+    border-radius:6px;box-shadow:var(--shadow);padding:28px;
+  }
+  .section-label{
+    font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--ink-soft);margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid var(--paper-line);
+  }
+  .chapter-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+  @media(max-width:640px){.chapter-grid{grid-template-columns:1fr;}}
+  .chapter-opt{
+    display:flex;align-items:center;gap:12px;
+    border:1px solid var(--paper-line);border-radius:5px;padding:12px 14px;
+    cursor:pointer;transition:border-color .15s, background .15s;
+  }
+  .chapter-opt:hover{border-color:var(--brass-soft);}
+  .chapter-opt.selected{border-color:var(--brass);background:#FDFAF2;}
+  .chapter-opt input{accent-color:var(--brass);width:16px;height:16px;flex:0 0 auto;}
+  .chapter-opt .meta{display:flex;flex-direction:column;}
+  .chapter-opt .name{font-weight:600;font-size:14.5px;}
+  .chapter-opt .count{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);}
+
+  .row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:12px;color:var(--ink-soft);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;}
+  select, input[type=number]{
+    font-family:var(--sans);font-size:14px;padding:8px 10px;border:1px solid var(--paper-line);
+    border-radius:4px;background:#fff;color:var(--ink);
+  }
+  .toggle-row{display:flex;align-items:center;gap:8px;font-size:14px;}
+  .toggle-row input{accent-color:var(--brass);width:16px;height:16px;}
+
+  .btn{
+    font-family:var(--sans);font-weight:600;font-size:14.5px;
+    padding:12px 26px;border-radius:4px;border:1px solid var(--ink);
+    background:var(--ink);color:var(--paper);cursor:pointer;
+    transition:transform .1s, background .15s;
+  }
+  .btn:hover{background:#324450;}
+  .btn:active{transform:translateY(1px);}
+  .btn.secondary{background:transparent;color:var(--ink);}
+  .btn.secondary:hover{background:#F0ECE0;}
+  .btn.brass{border-color:var(--brass);background:var(--brass);color:#fff;}
+  .btn.brass:hover{background:#8a6a28;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .start-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:12px;}
+  .warn-text{font-size:12.5px;color:var(--bad);font-family:var(--mono);}
+
+  /* ---------- QUIZ SCREEN ---------- */
+  .quiz-layout{display:grid;grid-template-columns:1fr 250px;gap:20px;align-items:start;}
+  @media(max-width:820px){.quiz-layout{grid-template-columns:1fr;}}
+
+  .status-bar{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);
+    margin-bottom:14px;flex-wrap:wrap;gap:8px;
+  }
+  .timer{font-weight:700;color:var(--ink);}
+  .timer.low{color:var(--bad);}
+  .progress-track{height:5px;background:var(--paper-line);border-radius:3px;overflow:hidden;margin-bottom:18px;}
+  .progress-fill{height:100%;background:var(--brass);transition:width .25s;}
+
+  .q-chapter-tag{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--brass);border:1px solid var(--brass-soft);
+    padding:3px 8px;border-radius:3px;margin-bottom:14px;
+  }
+  .q-text{font-family:var(--serif);font-size:19px;line-height:1.5;margin:0 0 20px;}
+  .q-num{font-family:var(--mono);color:var(--brass);margin-right:6px;}
+
+  .options{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+  .option{
+    display:flex;align-items:center;gap:14px;
+    border:1px solid var(--paper-line);border-radius:5px;padding:13px 16px;
+    cursor:pointer;transition:border-color .15s, background .15s;
+    font-size:15px;
+  }
+  .option:hover{border-color:var(--brass-soft);}
+  .bubble{
+    width:26px;height:26px;border-radius:50%;border:2px solid var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink-soft);
+    flex:0 0 auto;transition:all .15s;
+  }
+  .option.picked .bubble{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .option.picked{border-color:var(--ink);background:#F4F1E8;}
+  .option.correct{border-color:var(--ok);background:var(--ok-bg);}
+  .option.correct .bubble{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .option.incorrect{border-color:var(--bad);background:var(--bad-bg);}
+  .option.incorrect .bubble{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .nav-left,.nav-right{display:flex;gap:10px;}
+
+  /* palette */
+  .palette-card{
+    background:var(--card);border:1px solid var(--paper-line);border-radius:6px;
+    box-shadow:var(--shadow);padding:16px;position:sticky;top:20px;
+  }
+  .palette-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin:0 0 12px;}
+  .palette-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:280px;overflow-y:auto;padding-right:2px;}
+  .p-item{
+    width:100%;aspect-ratio:1;border-radius:4px;border:1px solid var(--paper-line);
+    font-family:var(--mono);font-size:11px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;background:#fff;color:var(--ink-soft);transition:all .1s;
+  }
+  .p-item.answered{background:#EFEAD9;border-color:var(--brass-soft);color:var(--ink);}
+  .p-item.current{border-color:var(--ink);border-width:2px;color:var(--ink);font-weight:700;}
+  .legend{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-size:11.5px;color:var(--ink-soft);}
+  .legend-item{display:flex;align-items:center;gap:8px;}
+  .legend-swatch{width:12px;height:12px;border-radius:3px;border:1px solid var(--paper-line);}
+
+  /* ---------- RESULTS ---------- */
+  .score-hero{
+    display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+    border-bottom:1px solid var(--paper-line);padding-bottom:22px;margin-bottom:22px;
+  }
+  .score-ring{
+    width:130px;height:130px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+    background:conic-gradient(var(--brass) calc(var(--pct)*1%), var(--paper-line) 0);
+    position:relative;
+  }
+  .score-ring::before{
+    content:"";position:absolute;inset:10px;border-radius:50%;background:var(--card);
+  }
+  .score-ring .num{position:relative;font-family:var(--serif);font-size:28px;font-weight:700;}
+  .score-meta h2{font-family:var(--serif);margin:0 0 6px;font-size:22px;}
+  .score-meta p{margin:2px 0;color:var(--ink-soft);font-size:14px;}
+
+  .chapter-breakdown{margin-bottom:26px;}
+  .cb-row{display:grid;grid-template-columns:1fr 90px 140px;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--paper-line);font-size:13.5px;}
+  .cb-row.head{font-family:var(--mono);text-transform:uppercase;font-size:10.5px;color:var(--ink-soft);letter-spacing:.08em;}
+  .cb-bar-track{height:7px;background:var(--paper-line);border-radius:4px;overflow:hidden;}
+  .cb-bar-fill{height:100%;background:var(--ok);}
+
+  .review-item{border:1px solid var(--paper-line);border-radius:5px;padding:16px;margin-bottom:12px;}
+  .review-item .q-text{font-size:15.5px;margin-bottom:12px;}
+  .review-line{font-size:13.5px;margin:4px 0;display:flex;gap:8px;}
+  .review-line .tag{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);min-width:66px;}
+  .review-line.your-wrong{color:var(--bad);}
+  .review-line.correct-ans{color:var(--ok);}
+  .filter-row{display:flex;gap:8px;margin-bottom:16px;}
+  .filter-btn{
+    font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;
+    padding:6px 12px;border:1px solid var(--paper-line);border-radius:4px;background:#fff;
+    cursor:pointer;color:var(--ink-soft);
+  }
+  .filter-btn.active{border-color:var(--ink);color:var(--ink);font-weight:700;background:#F4F1E8;}
+
+  footer{text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:40px;opacity:.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="masthead-left">
+      <p class="eyebrow">Advanced Information Technology Training · ICAI Format</p>
+      <h1>Python — Live Quiz</h1>
+      <p class="subtitle">200-question practice bank, drawn from Module 2, Unit 2</p>
+    </div>
+    <div class="seal">ADV<br>ITT<br>PYTHON</div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen active" id="screen-start">
+    <div class="card">
+      <p class="section-label">Step 1 — Choose Chapters</p>
+      <div class="chapter-grid" id="chapterGrid"></div>
+
+      <p class="section-label">Step 2 — Test Settings</p>
+      <div class="row">
+        <div class="field">
+          <label for="qCount">Number of Questions</label>
+          <select id="qCount"></select>
+        </div>
+        <div class="field">
+          <label for="order">Question Order</label>
+          <select id="order">
+            <option value="seq">Sequential (by chapter)</option>
+            <option value="shuffle">Shuffled</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <div class="toggle-row">
+            <input type="checkbox" id="timedMode">
+            <label for="timedMode" style="text-transform:none;font-family:var(--sans);font-size:14px;letter-spacing:normal;">Timed mode (1 min / question)</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <div class="toggle-row">
+            <input type="checkbox" id="instantFeedback" checked>
+            <label for="instantFeedback" style="text-transform:none;font-family:var(--sans);font-size:14px;letter-spacing:normal;">Show answer instantly after each pick</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="start-actions">
+        <span class="warn-text" id="startWarn"></span>
+        <button class="btn brass" id="beginBtn">Begin Test →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-layout">
+      <div>
+        <div class="status-bar">
+          <span>Question <strong id="statCurrent">1</strong> of <span id="statTotal">50</span></span>
+          <span id="timerWrap" style="display:none;">Time left: <span class="timer" id="timerVal">01:00</span></span>
+          <span>Answered: <strong id="statAnswered">0</strong></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+
+        <div class="card">
+          <span class="q-chapter-tag" id="qChapterTag">Chapter</span>
+          <p class="q-text"><span class="q-num" id="qNumLabel">1.</span><span id="qTextLabel"></span></p>
+          <div class="options" id="optionsWrap"></div>
+
+          <div class="nav-row">
+            <div class="nav-left">
+              <button class="btn secondary" id="prevBtn">← Previous</button>
+            </div>
+            <div class="nav-right">
+              <button class="btn secondary" id="clearBtn">Clear Response</button>
+              <button class="btn" id="nextBtn">Save &amp; Next →</button>
+              <button class="btn brass" id="submitBtn" style="display:none;">Submit Test</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="palette-card">
+        <p class="palette-title">Question Palette</p>
+        <div class="palette-grid" id="paletteGrid"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:#EFEAD9;border-color:var(--brass-soft);"></span>Answered</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#fff;"></span>Not answered</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#fff;border:2px solid var(--ink);"></span>Current</div>
+        </div>
+        <button class="btn brass" id="paletteSubmitBtn" style="width:100%;margin-top:16px;">Submit Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div class="screen" id="screen-results">
+    <div class="card">
+      <div class="score-hero">
+        <div class="score-ring" id="scoreRing" style="--pct:0;"><span class="num" id="scorePct">0%</span></div>
+        <div class="score-meta">
+          <h2 id="scoreHeadline">Test Complete</h2>
+          <p id="scoreLine1">You scored 0 / 0</p>
+          <p id="scoreLine2">Time taken: —</p>
+        </div>
+      </div>
+
+      <p class="section-label">Chapter-wise Performance</p>
+      <div class="chapter-breakdown" id="chapterBreakdown"></div>
+
+      <p class="section-label">Answer Review</p>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="wrong">Incorrect only</button>
+        <button class="filter-btn" data-filter="unanswered">Unanswered</button>
+      </div>
+      <div id="reviewWrap"></div>
+
+      <div class="start-actions" style="margin-top:20px;">
+        <button class="btn secondary" id="retakeBtn">↺ Configure New Test</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Practice material only — not an official ICAI publication.</footer>
+</div>
+
+<script>
+const ALL_QUESTIONS = [{"c":"Python for Data Science","q":"Who developed Python, and in which year was it first released?","o":["Dennis Ritchie, 1989","Guido van Rossum, 1991","James Gosling, 1995","Bjarne Stroustrup, 1985"],"a":1},{"c":"Python for Data Science","q":"Python uses ______ for defining blocks of code instead of braces.","o":["Semicolons","Indentation","Parentheses","Brackets"],"a":1},{"c":"Python for Data Science","q":"Which of the following is NOT a programming paradigm supported by Python?","o":["Structured programming","Object-oriented programming","Functional programming","Assembly-level programming"],"a":3},{"c":"Python for Data Science","q":"Python uses which memory management technique to automatically reclaim unused memory?","o":["Manual memory allocation","Garbage collection","Reference stacking","Pointer arithmetic"],"a":1},{"c":"Python for Data Science","q":"Which of the following best describes Python's typing system?","o":["Static typing","Dynamic typing","No typing system","Fixed typing"],"a":1},{"c":"Python for Data Science","q":"On which of the following operating systems can Python run?","o":["Windows only","Linux only","Windows, Mac, Linux and Raspberry Pi","Mac only"],"a":2},{"c":"Python for Data Science","q":"Python code is executed using:","o":["A compiler only","An interpreter","An assembler","A linker"],"a":1},{"c":"Python for Data Science","q":"Which of the following is highlighted as making Python a beginner-friendly language?","o":["Complex syntax","Syntax that resembles English","Mandatory manual memory management","Requirement of many lines of code"],"a":1},{"c":"Python for Data Science","q":"In Python, a variable is considered to be created when:","o":["It is declared with a data type","It is assigned a value","It is imported","It is compiled"],"a":1},{"c":"Python for Data Science","q":"Which of the following is a valid Python variable name?","o":["2value","_value","value$","class"],"a":1},{"c":"Python for Data Science","q":"Which of the following CANNOT be used as a variable name in Python?","o":["my_var","_temp","while","Var1"],"a":2},{"c":"Python for Data Science","q":"Approximately how many keywords does Python have, as mentioned in the chapter?","o":["10","20","30","50"],"a":2},{"c":"Python for Data Science","q":"What will be the data type of the variable after the statement pi = 3.14?","o":["int","float","string","boolean"],"a":1},{"c":"Python for Data Science","q":"Which operator returns the quotient when x is divided by y?","o":["/","//","%","**"],"a":1},{"c":"Python for Data Science","q":"Which operator is used to calculate the remainder of a division in Python?","o":["/","//","%","**"],"a":2},{"c":"Python for Data Science","q":"The expression 2 ** 3 evaluates to:","o":["6","8","9","5"],"a":1},{"c":"Python for Data Science","q":"Which of the following is an example of a relational expression?","o":["x + y","x and y","x > y","x = y"],"a":2},{"c":"Python for Data Science","q":"Logical expressions in Python return which type of result?","o":["Integer","String","Boolean","Float"],"a":2},{"c":"Python for Data Science","q":"Which logical operator returns True only if both operands are True?","o":["or","and","not","xor"],"a":1},{"c":"Python for Data Science","q":"The 'not' operator in Python:","o":["Reverses the boolean value of its operand","Combines two conditions","Compares two values","Adds two numbers"],"a":0},{"c":"Python for Data Science","q":"Which string method converts the first character of a string to uppercase?","o":["upper()","capitalize()","title()","swapcase()"],"a":1},{"c":"Python for Data Science","q":"Which method returns the number of times a substring occurs in a string?","o":["index()","find()","count()","len()"],"a":2},{"c":"Python for Data Science","q":"Which method returns the position of the first occurrence of a substring in a string?","o":["index()","count()","join()","strip()"],"a":0},{"c":"Python for Data Science","q":"Which method checks whether all characters in a string are alphabets?","o":["isalnum()","isalpha()","isdigit()","isdecimal()"],"a":1},{"c":"Python for Data Science","q":"Which method converts all characters of a string to lowercase?","o":["lower()","upper()","title()","capitalize()"],"a":0},{"c":"Python for Data Science","q":"Which method replaces all occurrences of a substring with another substring?","o":["replace()","join()","strip()","split()"],"a":0},{"c":"Python for Data Science","q":"Which method removes leading and trailing whitespace from a string?","o":["strip()","trim()","clean()","remove()"],"a":0},{"c":"Python for Data Science","q":"Which method converts all uppercase letters of a string to lowercase and vice versa?","o":["title()","swapcase()","capitalize()","upper()"],"a":1},{"c":"Python for Data Science","q":"Which method returns True if a string starts with a specified prefix?","o":["startswith()","endswith()","find()","has()"],"a":0},{"c":"Python for Data Science","q":"Which function returns a concatenated string from an iterable of strings?","o":["join()","split()","concat()","merge()"],"a":0},{"c":"Python for Data Science","q":"In Python, a list is created using which type of brackets?","o":["Curly braces {}","Parentheses ()","Square brackets []","Angle brackets <>"],"a":2},{"c":"Python for Data Science","q":"What is the index of the first element in a Python list?","o":["1","0","-1","Undefined"],"a":1},{"c":"Python for Data Science","q":"Which of the following is NOT a characteristic of Python lists?","o":["Ordered","Mutable","Allows duplicates","Immutable"],"a":3},{"c":"Python for Data Science","q":"Which method adds a single element to the end of a list?","o":["extend()","append()","insert()","add()"],"a":1},{"c":"Python for Data Science","q":"Which method adds elements of an iterable one by one to the end of a list?","o":["append()","extend()","insert()","update()"],"a":1},{"c":"Python for Data Science","q":"Which method allows you to add an element at a specific index in a list?","o":["append()","extend()","insert()","index()"],"a":2},{"c":"Python for Data Science","q":"Which statement removes an item from a list using its index without returning it?","o":["remove","del","pop","discard"],"a":1},{"c":"Python for Data Science","q":"Which method removes the first occurrence of a given value in a list?","o":["del","pop()","remove()","discard()"],"a":2},{"c":"Python for Data Science","q":"Which method removes and returns the last item of a list if no index is specified?","o":["remove()","pop()","del","discard()"],"a":1},{"c":"Python for Data Science","q":"Which method sorts the elements of a list in ascending order by default?","o":["order()","arrange()","sort()","sequence()"],"a":2},{"c":"Python for Data Science","q":"A tuple in Python is defined using which brackets?","o":["Square brackets []","Curly braces {}","Parentheses ()","Angle brackets <>"],"a":2},{"c":"Python for Data Science","q":"Which of the following is a key characteristic of Python tuples?","o":["Mutable","Immutable","Unordered","Cannot store multiple data types"],"a":1},{"c":"Python for Data Science","q":"Tuples in Python are described as heterogeneous because:","o":["They can only store one data type","They can store elements from several data types","They cannot be indexed","They have no order"],"a":1},{"c":"Python for Data Science","q":"Which built-in constructor converts a list into a tuple?","o":["list()","tuple()","set()","dict()"],"a":1},{"c":"Python for Data Science","q":"Which function returns the minimum value from a tuple?","o":["min()","low()","least()","small()"],"a":0},{"c":"Python for Data Science","q":"Compared to lists, tuple iterations are:","o":["Slower","Comparatively faster","Exactly the same speed","Not possible"],"a":1},{"c":"Python for Data Science","q":"Which of the following correctly refers to the last element of a tuple using negative indexing?","o":["tuple[0]","tuple[-1]","tuple[1]","tuple[-0]"],"a":1},{"c":"Python for Data Science","q":"Which of the following statements about tuples and lists is TRUE?","o":["Tuples have more built-in methods than lists","Lists are immutable and tuples are mutable","Lists have more built-in methods than tuples","Both have identical methods"],"a":2},{"c":"Python for Data Science","q":"Which statement is used to check only a single condition in Python?","o":["if","if-else","if-elif-else","while"],"a":0},{"c":"Python for Data Science","q":"In an if-else statement, the else block executes when:","o":["The if condition is True","The if condition is False","Both conditions are True","Neither condition is evaluated"],"a":1},{"c":"Python for Data Science","q":"Which construct should be used when a user needs to check more than two conditions?","o":["if","if-else","if-elif-else","nested for"],"a":2},{"c":"Python for Data Science","q":"Which of the following describes an if statement placed within another if statement?","o":["Nested if","if-elif-else","while loop","for loop"],"a":0},{"c":"Python for Data Science","q":"What are the two main types of loops in Python mentioned in the chapter?","o":["for and do-while","for and while","while and repeat","do and until"],"a":1},{"c":"Python for Data Science","q":"The function range(5) generates which sequence of values?","o":["1,2,3,4,5","0,1,2,3,4","0,1,2,3,4,5","1,2,3,4"],"a":1},{"c":"Python for Data Science","q":"What values will range(1, 5) generate?","o":["1,2,3,4","1,2,3,4,5","0,1,2,3,4","2,3,4,5"],"a":0},{"c":"Python for Data Science","q":"What values will range(1, 10, 2) generate?","o":["1,2,3,4,5,6,7,8,9","1,3,5,7,9","2,4,6,8","1,4,7"],"a":1},{"c":"Python for Data Science","q":"A for loop in Python can iterate over:","o":["Lists only","Strings only","Lists, strings, and range() output","Only numbers"],"a":2},{"c":"Python for Data Science","q":"A while loop continues executing as long as:","o":["The condition is False","The condition is True","The counter equals zero","The loop is nested"],"a":1},{"c":"Python for Data Science","q":"Which loop is generally preferable when the number of iterations is not known in advance?","o":["for loop","while loop","nested loop","range loop"],"a":1},{"c":"Python for Data Science","q":"Loops are primarily used in programming to:","o":["Slow down execution","Automate repetitive tasks","Declare variables","Import libraries"],"a":1},{"c":"Python for Data Science","q":"Which built-in Python function is primarily used to handle files?","o":["file()","open()","read()","access()"],"a":1},{"c":"Python for Data Science","q":"Which file mode opens a file for reading and gives an error if the file does not exist?","o":["\"w\"","\"a\"","\"r\"","\"x\""],"a":2},{"c":"Python for Data Science","q":"Which file mode creates a file and returns an error if the file already exists?","o":["\"r\"","\"w\"","\"a\"","\"x\""],"a":3},{"c":"Python for Data Science","q":"Which file mode opens a file for appending and creates the file if it doesn't exist?","o":["\"r\"","\"a\"","\"x\"","\"w\""],"a":1},{"c":"Python for Data Science","q":"Which file mode creates a new file if it doesn't exist, and overwrites it if it does?","o":["\"r\"","\"x\"","\"w\"","None of the above"],"a":2},{"c":"Python for Data Science","q":"Which method is used to read the content of a file once it is opened?","o":["read()","open()","get()","fetch()"],"a":0},{"c":"Python for Data Science","q":"Which of the following is good practice after finishing operations on a file?","o":["Deleting the file","Closing the file","Reopening the file","Renaming the file"],"a":1},{"c":"Python for Data Science","q":"To delete a file in Python, which module must be imported?","o":["sys","os","io","file"],"a":1},{"c":"Python for Data Science","q":"Which function of the os module is used to delete a file?","o":["os.delete()","os.remove()","os.unlink_file()","os.erase()"],"a":1},{"c":"Python for Data Science","q":"The open() function primarily takes which two parameters?","o":["Mode and size","Filename and mode","Path and size","Filename and encoding only"],"a":1},{"c":"Data Analysis for Python","q":"A Python library is best described as:","o":["A single line of code","A group of reusable modules containing functions","An operating system","A hardware component"],"a":1},{"c":"Data Analysis for Python","q":"What is the main benefit of using Python libraries?","o":["They make code execution slower","They allow code reuse and simplify programming","They eliminate the need for variables","They replace the need for loops"],"a":1},{"c":"Data Analysis for Python","q":"What is the common alias used while importing NumPy?","o":["py","np","pn","nmp"],"a":1},{"c":"Data Analysis for Python","q":"What is the common alias used while importing Pandas?","o":["pn","pdas","pd","pad"],"a":2},{"c":"Data Analysis for Python","q":"NumPy stands for:","o":["Numeric Python","Numerical Python","Number Processing","Numeric Manipulation"],"a":1},{"c":"Data Analysis for Python","q":"The fundamental data structure of NumPy is:","o":["List","DataFrame","nd-array (multi-dimensional array)","Series"],"a":2},{"c":"Data Analysis for Python","q":"NumPy arrays are stored in memory as:","o":["A linked list","A contiguous block of memory","A tree structure","Scattered memory blocks"],"a":1},{"c":"Data Analysis for Python","q":"Vectorized operations in NumPy mean that:","o":["Operations are performed element-by-element using explicit loops","Operations are performed on entire arrays at once","Operations require external libraries","Operations cannot be performed on arrays"],"a":1},{"c":"Data Analysis for Python","q":"Universal functions (ufuncs) in NumPy are:","o":["Functions written only in pure Python","Functions implemented in compiled C code that operate element-wise","User-defined functions only","Functions used only for strings"],"a":1},{"c":"Data Analysis for Python","q":"Broadcasting in NumPy allows:","o":["Operations only on arrays of the same shape","Automatic expansion of a smaller array to match a larger one during operations","Conversion of arrays to lists","Random number generation"],"a":1},{"c":"Data Analysis for Python","q":"Which attribute of a NumPy array returns its number of dimensions?","o":["shape","ndim","size","dtype"],"a":1},{"c":"Data Analysis for Python","q":"Which attribute returns the dimensions (rows and columns) of a NumPy array?","o":["ndim","shape","size","len"],"a":1},{"c":"Data Analysis for Python","q":"NumPy array indexing starts at:","o":["1","-1","0","2"],"a":2},{"c":"Data Analysis for Python","q":"Which NumPy function is used to generate random numbers?","o":["np.random.rand","np.rand()","np.generate()","np.create_random()"],"a":0},{"c":"Data Analysis for Python","q":"Which operation involves switching the rows and columns of a two-dimensional array?","o":["Reshaping","Transposing","Broadcasting","Slicing"],"a":1},{"c":"Data Analysis for Python","q":"Which operation changes the shape/dimensions of an array while keeping the total number of elements the same?","o":["Transposing","Reshaping","Slicing","Indexing"],"a":1},{"c":"Data Analysis for Python","q":"NumPy is primarily used for:","o":["Web development","Numerical and scientific computing","File compression","Network security"],"a":1},{"c":"Data Analysis for Python","q":"NumPy serves as the backbone for:","o":["Only visualization libraries","Numerous other scientific and data-related libraries","Operating systems","Web browsers"],"a":1},{"c":"Data Analysis for Python","q":"Which of the following is NOT typically listed among NumPy's mathematical function categories?","o":["Statistics","Linear algebra","Cryptographic hashing","Trigonometric functions"],"a":2},{"c":"Data Analysis for Python","q":"Elements within a single NumPy array must be of:","o":["Different data types","The same data type","String type only","Boolean type only"],"a":1},{"c":"Data Analysis for Python","q":"The two core data structures in Pandas are:","o":["Array and Matrix","Series and DataFrame","List and Tuple","Vector and Tensor"],"a":1},{"c":"Data Analysis for Python","q":"A Pandas Series is best described as:","o":["A two-dimensional labeled data structure","A one-dimensional labeled array that can hold data of any type","A dictionary of dictionaries","A file format"],"a":1},{"c":"Data Analysis for Python","q":"A Pandas DataFrame most closely resembles:","o":["A single number","A spreadsheet or SQL table with rows and columns","A single string","A binary tree"],"a":1},{"c":"Data Analysis for Python","q":"Which Pandas method displays the first few rows of a DataFrame?","o":["df.top()","df.head()","df.start()","df.first()"],"a":1},{"c":"Data Analysis for Python","q":"Which Pandas method displays the last few rows of a DataFrame?","o":["df.end()","df.bottom()","df.tail()","df.last()"],"a":2},{"c":"Data Analysis for Python","q":"Which Pandas attribute returns the number of rows and columns of a DataFrame?","o":["df.size","df.shape","df.dim","df.length"],"a":1},{"c":"Data Analysis for Python","q":"Which Pandas attribute returns the column labels of a DataFrame?","o":["df.columns","df.labels","df.headers","df.fields"],"a":0},{"c":"Data Analysis for Python","q":"Pandas' automatic alignment of data during operations is primarily based on:","o":["Column color","Index labels","Data type only","File size"],"a":1},{"c":"Data Analysis for Python","q":"Pandas emphasizes which type of indexing for accessing and manipulating data?","o":["Position-based indexing only","Label-based indexing","Random indexing","Hash-based indexing"],"a":1},{"c":"Data Analysis for Python","q":"Which of the following is a capability of Pandas related to messy data?","o":["Data cleaning (handling missing data, type conversion)","Image compression","Video editing","Network routing"],"a":0},{"c":"Data Analysis for Python","q":"Grouping rows based on criteria and applying functions like sum or mean in Pandas is called:","o":["Data slicing","Data aggregation","Data serialization","Data encryption"],"a":1},{"c":"Data Analysis for Python","q":"Which of the following file formats can Pandas read data from, as per the chapter?","o":["CSV and Excel only, and no other formats","CSV, Excel, and other external data sources","Only Excel files","Only plain text files"],"a":1},{"c":"Data Analysis for Python","q":"Combining data from multiple DataFrames based on common columns or indices is known as:","o":["Merging and concatenating","Reshaping","Broadcasting","Normalizing"],"a":0},{"c":"Data Analysis for Python","q":"Which of the following is a way to handle missing data in Pandas?","o":["Filling missing values or removing rows/columns with missing data","Ignoring the DataFrame entirely","Converting the DataFrame to a string","Deleting the whole dataset"],"a":0},{"c":"Data Analysis for Python","q":"Pandas provides functions to create a DataFrame from external data sources such as:","o":["CSV files and Excel spreadsheets","Only images","Only audio files","Only compiled binaries"],"a":0},{"c":"Data Analysis for Python","q":"Data preprocessing is primarily performed to:","o":["Increase the size of the dataset artificially","Clean, transform, and organize raw data for analysis or modeling","Delete all the data","Encrypt the dataset"],"a":1},{"c":"Data Analysis for Python","q":"Which of the following is a step in data cleaning?","o":["Handling missing values","Creating visualizations","Building a machine learning model","Deploying an application"],"a":0},{"c":"Data Analysis for Python","q":"Removing duplicate records from a dataset is part of:","o":["Data cleaning","Data visualization","Model deployment","Feature scaling only"],"a":0},{"c":"Data Analysis for Python","q":"Normalization typically scales numerical features to a range of:","o":["-1 to 1","0 to 1","0 to 100","1 to 10"],"a":1},{"c":"Data Analysis for Python","q":"Standardization transforms data to have:","o":["A mean of 1 and standard deviation of 0","A mean of 0 and a standard deviation of 1","A mean equal to the maximum value","No defined mean or standard deviation"],"a":1},{"c":"Data Analysis for Python","q":"Applying the natural logarithm to data to reduce skewness is known as:","o":["Log transformation","Binning","One-hot encoding","Feature selection"],"a":0},{"c":"Data Analysis for Python","q":"Converting categorical variables into numerical format using one-hot encoding or label encoding is called:","o":["Data reduction","Encoding categorical variables","Dimensionality reduction","Outlier detection"],"a":1},{"c":"Data Analysis for Python","q":"Grouping continuous data into discrete bins or categories is known as:","o":["Binning/Discretization","Normalization","Aggregation","Feature engineering"],"a":0},{"c":"Data Analysis for Python","q":"Creating new features from existing ones to capture important patterns is called:","o":["Feature engineering","Feature selection","Data cleaning","Data reduction"],"a":0},{"c":"Data Analysis for Python","q":"PCA stands for:","o":["Principal Component Analysis","Primary Component Aggregation","Predictive Component Analysis","Principal Correlation Algorithm"],"a":0},{"c":"Data Analysis for Python","q":"PCA is primarily used for:","o":["Increasing the number of features in a dataset","Reducing the dimensionality of a dataset while preserving important information","Encrypting data","Removing all numerical data"],"a":1},{"c":"Data Analysis for Python","q":"Recursive Feature Elimination (RFE) works by:","o":["Adding random features iteratively","Iteratively removing the least important features based on model performance","Encrypting features","Duplicating important features"],"a":1},{"c":"Data Analysis for Python","q":"Which technique creates synthetic examples of the minority class by interpolating between existing samples?","o":["SMOTE","PCA","One-hot encoding","Standardization"],"a":0},{"c":"Data Analysis for Python","q":"Undersampling deals with data imbalance by:","o":["Increasing the minority class samples","Randomly removing instances from the majority class","Encrypting the majority class","Duplicating all data"],"a":1},{"c":"Data Analysis for Python","q":"Oversampling techniques mentioned in the chapter include:","o":["PCA and RFE","Random Oversampling, SMOTE, and ADASYN","Binning and log transformation","Normalization and standardization"],"a":1},{"c":"Data Analysis for Python","q":"EDA stands for:","o":["Extended Data Analysis","Exploratory Data Analysis","External Data Aggregation","Estimated Data Algorithm"],"a":1},{"c":"Data Analysis for Python","q":"EDA is typically performed:","o":["After building the final machine learning model","As a first step before formal statistical studies or modeling","Only after deployment","Only for image data"],"a":1},{"c":"Data Analysis for Python","q":"Which type of EDA focuses on analyzing a single variable at a time?","o":["Univariate Analysis","Bivariate Analysis","Multivariate Analysis","Time Series Analysis"],"a":0},{"c":"Data Analysis for Python","q":"Which type of EDA examines the relationship between two variables?","o":["Univariate Analysis","Bivariate Analysis","Multivariate Analysis","Missing Data Analysis"],"a":1},{"c":"Data Analysis for Python","q":"Which type of EDA extends analysis to more than two variables?","o":["Univariate Analysis","Bivariate Analysis","Multivariate Analysis","Outlier Analysis"],"a":2},{"c":"Data Analysis for Python","q":"Which EDA technique focuses on datasets that have a temporal component?","o":["Time Series Analysis","Outlier Analysis","Univariate Analysis","Missing Data Analysis"],"a":0},{"c":"Data Analysis for Python","q":"Techniques like box plots, scatter plots, z-scores, and clustering are primarily used in:","o":["Missing Data Analysis","Outlier Analysis","Time Series Analysis","Feature Engineering"],"a":1},{"c":"Data Analysis for Python","q":"Which of the following is NOT listed as a fundamental objective of EDA in the chapter?","o":["Understand the data","Detect patterns and trends","Encrypt sensitive data","Assess data quality"],"a":2},{"c":"Data Analysis for Python","q":"Histograms, box plots, bar charts, and summary statistics are commonly used in:","o":["Univariate Analysis","Bivariate Analysis","Multivariate Analysis","Time Series Analysis"],"a":0},{"c":"Data Analysis for Python","q":"ARIMA models are associated with which type of EDA technique?","o":["Univariate Analysis","Time Series Analysis","Outlier Analysis","Missing Data Analysis"],"a":1},{"c":"Introduction to Machine Learning","q":"Machine learning is best described as:","o":["A hardware device","Learning from historical data to understand patterns and make future predictions","A type of database","A programming language"],"a":1},{"c":"Introduction to Machine Learning","q":"Machine learning is considered a subset of:","o":["Data visualization","Artificial Intelligence","Cloud computing","Cybersecurity"],"a":1},{"c":"Introduction to Machine Learning","q":"Which analogy is used in the chapter to describe the relationship between AI and ML?","o":["AI is the engine, ML is the vehicle","ML is the engine, AI is the vehicle","AI and ML are exactly the same thing","AI is the fuel, ML is the road"],"a":1},{"c":"Introduction to Machine Learning","q":"In supervised learning, the model is trained on:","o":["Unlabeled data only","A labeled dataset with input-output pairs","Random noise","No data at all"],"a":1},{"c":"Introduction to Machine Learning","q":"Unsupervised learning is primarily used to:","o":["Predict already-labeled outcomes","Discover patterns, relationships, or structures in data without labeled outputs","Only classify text data","Only work with image data"],"a":1},{"c":"Introduction to Machine Learning","q":"Reinforcement learning is based on:","o":["Labeled datasets only","Trial-and-error learning through interaction with an environment","Unlabeled data clustering only","Manual rule-based programming"],"a":1},{"c":"Introduction to Machine Learning","q":"In reinforcement learning, an agent aims to:","o":["Minimize its cumulative reward","Maximize a cumulative reward signal","Avoid interacting with the environment","Memorize labeled data"],"a":1},{"c":"Introduction to Machine Learning","q":"Which of the following ML applications in the finance industry is mentioned in the chapter?","o":["Radiology imaging","Fraud transaction detection","Crop suggestion","Predictive maintenance"],"a":1},{"c":"Introduction to Machine Learning","q":"Which ML application is associated with the healthcare industry, as per the chapter?","o":["Algo-trading","ML in radiology","Predictive maintenance","Agri-bot"],"a":1},{"c":"Introduction to Machine Learning","q":"Which ML application is associated with the agriculture industry, as per the chapter?","o":["Credit risk analyzing","Agri-bot for crop and pesticide suggestions","Fraud detection","Predictive maintenance"],"a":1},{"c":"Introduction to Machine Learning","q":"Predictive maintenance is described as a common application of ML in which industry?","o":["Healthcare industry","Manufacturing and maintenance industry","Agriculture industry","Finance industry"],"a":1},{"c":"Introduction to Machine Learning","q":"Which of the following is NOT one of the three main categories of ML algorithms discussed in the chapter?","o":["Supervised learning","Unsupervised learning","Reinforcement learning","Deterministic learning"],"a":3},{"c":"Introduction to Machine Learning","q":"Which type of ML algorithm requires labeled output/target values for training?","o":["Unsupervised learning","Supervised learning","Reinforcement learning","None of the above"],"a":1},{"c":"Introduction to Machine Learning","q":"Which type of ML algorithm is helpful for clustering and dimensionality reduction tasks?","o":["Supervised learning","Unsupervised learning","Reinforcement learning","Semi-supervised learning"],"a":1},{"c":"Introduction to Machine Learning","q":"Which two types of ML algorithms does the chapter say the module will focus on going forward?","o":["Supervised and Reinforcement learning","Supervised and Unsupervised learning","Unsupervised and Reinforcement learning","Only Reinforcement learning"],"a":1},{"c":"Introduction to Machine Learning","q":"Computer Vision, as mentioned in the chapter, is described as a subset of:","o":["Data visualization","Machine Learning","File handling","Data preprocessing"],"a":1},{"c":"Introduction to Machine Learning","q":"According to the chapter, radiologists can manually analyze approximately how many x-rays on average?","o":["10 to 20","50 to 100","500 to 1000","1 to 5"],"a":1},{"c":"Introduction to Machine Learning","q":"As per the chapter, algo-trading uses ML to examine:","o":["Only weather data","Market data, news sentiment, and past trading patterns","Only social media likes","Only employee records"],"a":1},{"c":"Introduction to Machine Learning","q":"In remote patient monitoring using ML, detected anomalies typically result in:","o":["Automatic deletion of patient data","Alerts being sent to the respective doctor","Immediate surgery without review","No action being taken"],"a":1},{"c":"Introduction to Machine Learning","q":"As per the chapter, the key growth metrics influenced by ML-driven decisions in businesses are derived from:","o":["Random guesses","Insights gained from data-driven decisions","Manual surveys only","Government regulations"],"a":1},{"c":"Data Visualization with Python","q":"Which Python libraries are mentioned in the chapter for data visualization?","o":["Matplotlib, Seaborn, and Plotly","NumPy, Pandas, and SciPy","Flask, Django, and FastAPI","TensorFlow, Keras, and PyTorch"],"a":0},{"c":"Data Visualization with Python","q":"A line plot is mainly used to show:","o":["Categorical comparisons only","Continuous data points, often against dates on the x-axis","Only percentage proportions","Only hierarchical data"],"a":1},{"c":"Data Visualization with Python","q":"Unlike Matplotlib, Seaborn requires the input data to come from:","o":["A raw list","A dictionary only","A DataFrame","A tuple only"],"a":2},{"c":"Data Visualization with Python","q":"A scatter plot is primarily used to show:","o":["The frequency distribution of a single variable","The relationship between two numeric variables","Hierarchical composition","Cumulative totals over time"],"a":1},{"c":"Data Visualization with Python","q":"In a scatter plot, a positive correlation means:","o":["One variable increases while the other decreases","Both variables increase together","Both variables remain constant","There is no relationship between the variables"],"a":1},{"c":"Data Visualization with Python","q":"In a scatter plot, a negative correlation means:","o":["Both variables increase together","One variable increases as the other decreases","Both variables are identical","There is no data available"],"a":1},{"c":"Data Visualization with Python","q":"Histograms are primarily used to visualize:","o":["The frequency distribution of continuous variables","Hierarchical data","Percentage proportions","Correlation between all variables"],"a":0},{"c":"Data Visualization with Python","q":"In a histogram, what does the width of each bar typically represent?","o":["Frequency","Interval (bin size)","Mean value","Standard deviation"],"a":1},{"c":"Data Visualization with Python","q":"If the bin size in a histogram is too large:","o":["All bins will have nearly the same frequency","All values get grouped into only a few bins, reducing useful insight","The histogram becomes a scatter plot","The data becomes categorical"],"a":1},{"c":"Data Visualization with Python","q":"If the bin size in a histogram is too small:","o":["All the bins will have somewhat the same frequency","The chart converts into a pie chart","Data becomes normally distributed automatically","Bins disappear entirely"],"a":0},{"c":"Data Visualization with Python","q":"Which Matplotlib functions are used to create bar plots, as per the chapter?","o":["plot() and scatter()","bar() and barh()","pie() and donut()","hist() and box()"],"a":1},{"c":"Data Visualization with Python","q":"Bar plots are mainly used to represent:","o":["A categorical variable against a numeric variable","Two continuous variables against each other","Hierarchical rings","Time series decomposition"],"a":0},{"c":"Data Visualization with Python","q":"Which function in Matplotlib is used to create a pie chart?","o":["pie()","circle()","donut()","wedge()"],"a":0},{"c":"Data Visualization with Python","q":"Pie charts become less effective for interpretation when:","o":["There are only 2 categories","The number of categories is very large","The data is numeric","The data is time-based"],"a":1},{"c":"Data Visualization with Python","q":"Bar plots that display sub-categories within a main category, separated by color, are known as:","o":["Grouped bar plots","Stacked bar plots","Nested bar plots","Layered bar plots"],"a":1},{"c":"Data Visualization with Python","q":"A boxplot is constructed using which five key values?","o":["Mean, mode, median, variance, range","Minimum, first quartile, median, third quartile, maximum","Sum, average, count, min, max","Mean, standard deviation, skewness, kurtosis, range"],"a":1},{"c":"Data Visualization with Python","q":"In a boxplot, values considered outliers typically lie:","o":["Within Q1 and Q3","Outside Q1 - 1.5*IQR and Q3 + 1.5*IQR","Exactly at the median","Between the minimum and maximum only"],"a":1},{"c":"Data Visualization with Python","q":"Boxplots are useful for identifying:","o":["Outliers and data skewness","Only the mean of the data","File formats","Library versions"],"a":0},{"c":"Data Visualization with Python","q":"A heatmap represents data values in a matrix using:","o":["Numbers only","Colors","Shapes","Sound"],"a":1},{"c":"Data Visualization with Python","q":"Which Seaborn function is used to generate a heatmap?","o":["seaborn.heatmap()","seaborn.matrix()","seaborn.colorplot()","seaborn.gradient()"],"a":0},{"c":"Data Visualization with Python","q":"Heatmaps are mainly used to plot:","o":["Hierarchical composition","Correlation between numeric variables","Categorical frequency only","Time-based cumulative totals only"],"a":1},{"c":"Data Visualization with Python","q":"The pairplot() function in Seaborn is used to visualize:","o":["A single variable's distribution only","Pairwise relationships between multiple variables","Only categorical data","File attachments"],"a":1},{"c":"Data Visualization with Python","q":"In a Seaborn pairplot, the diagonal plots typically show:","o":["Scatter plots between two variables","A univariate distribution plot of each variable","A heatmap of correlations","A pie chart"],"a":1},{"c":"Data Visualization with Python","q":"The countplot() function is used to generate a bar chart that shows:","o":["The mean of a numeric variable","The counts of observations in each category","The correlation matrix","The cumulative percentage"],"a":1},{"c":"Data Visualization with Python","q":"Which library provides the countplot() function, as described in the chapter?","o":["Matplotlib","Seaborn","Plotly","NumPy"],"a":1},{"c":"Data Visualization with Python","q":"A sunburst chart is primarily used to display:","o":["Time series decomposition","Hierarchical data using concentric rings","Correlation matrices","Missing data patterns"],"a":1},{"c":"Data Visualization with Python","q":"In a sunburst chart, the root of the hierarchy is placed:","o":["At the outer edge","At the center","On the left side","Randomly"],"a":1},{"c":"Data Visualization with Python","q":"A waterfall chart is primarily used to show:","o":["How a specific value changes cumulatively over time or categories","The distribution of a single categorical variable","Correlation between two variables","Hierarchical composition"],"a":0},{"c":"Data Visualization with Python","q":"A donut chart is essentially a pie chart with:","o":["Additional slices added","The central portion removed","No slices at all","A permanent 3D effect"],"a":1},{"c":"Data Visualization with Python","q":"Unlike a pie chart, a donut chart places emphasis on:","o":["The area of the slices","The length of the arcs","The color gradient only","The number of categories only"],"a":1},{"c":"Data Visualization with Python","q":"Which Matplotlib function allows the creation of a chart with two y-axes (dual axis)?","o":["dualaxis()","twinx()","secondary_y()","split_axis()"],"a":1},{"c":"Data Visualization with Python","q":"A dual axis chart is useful when a user wants to:","o":["Remove data from the plot","Compare trends of two variables in one graph","Convert numeric data into categorical data","Hide the legend"],"a":1},{"c":"Data Visualization with Python","q":"A Pareto chart combines which two types of graphs?","o":["Pie chart and line graph","Bar graph and line graph","Scatter plot and histogram","Heatmap and boxplot"],"a":1},{"c":"Data Visualization with Python","q":"In a Pareto chart, the line typically represents:","o":["The frequency of a single factor","The cumulative total","The mean value","The standard deviation"],"a":1},{"c":"Data Visualization with Python","q":"The Pareto chart is named after:","o":["A Python developer","Economist Vilfredo Pareto","A well-known data scientist","A statistician named Pearson"],"a":1},{"c":"Data Visualization with Python","q":"Time series decomposition breaks a series into which components?","o":["Level, trend, seasonality, and noise","Mean, median, mode, and range","Rows, columns, and index","Header, body, and footer"],"a":0},{"c":"Data Visualization with Python","q":"In time series decomposition, \"Level\" refers to:","o":["The random variation in the series","The average value in the series","The repeating short-term cycle","The increasing or decreasing value"],"a":1},{"c":"Data Visualization with Python","q":"In time series decomposition, \"Trend\" refers to:","o":["The average value in the series","The increasing or decreasing value in the series","The repeating short-term cycle","Random noise"],"a":1},{"c":"Data Visualization with Python","q":"In time series decomposition, \"Seasonality\" refers to:","o":["The average value","The repeating short-term cycle in the series","Random variation","The increasing/decreasing trend"],"a":1},{"c":"Data Visualization with Python","q":"\"Noise\" in a time series is classified as:","o":["A systematic component","A non-systematic component","The trend component","The seasonal component"],"a":1},{"c":"Data Visualization with Python","q":"ACF stands for:","o":["Autocorrelation Function","Automated Correlation Formula","Average Cyclic Frequency","Autonomous Correlation Factor"],"a":0},{"c":"Data Visualization with Python","q":"In an ACF plot, the y-axis typically represents:","o":["The number of lags","The correlation coefficient","The mean value","The standard deviation"],"a":1},{"c":"Data Visualization with Python","q":"In an ACF plot, the x-axis typically represents:","o":["The correlation coefficient","The number of lags","Frequency","Time in seconds only"],"a":1},{"c":"Data Visualization with Python","q":"PACF stands for:","o":["Partial Autocorrelation Function","Predictive Autocorrelation Formula","Primary Autoregressive Component Factor","Periodic Autocorrelation Function"],"a":0},{"c":"Data Visualization with Python","q":"PACF plots are particularly useful for determining:","o":["The color scheme of a plot","The Auto-Regression (AR) order of a model","The number of categories in a pie chart","The dimensions of a NumPy array"],"a":1},{"c":"Data Visualization with Python","q":"In Matplotlib, plot customization is primarily handled through the module called:","o":["pylab","pyplot","plotconfig","plotstyle"],"a":1},{"c":"Data Visualization with Python","q":"The plot() function in the pyplot module accepts which of the following as one of its arguments?","o":["Only the dataset","The dataset, type of visualization, and parameters to alter the plot","Only the color code","Only the file name"],"a":1},{"c":"Data Visualization with Python","q":"Which of the following can be altered through plot customization, as per the chapter?","o":["Axis labels, gridlines, legends, and colors","The Python version","The operating system","The dataset's file format only"],"a":0},{"c":"Data Visualization with Python","q":"The main purpose of annotation on a plot is to:","o":["Delete unnecessary data points","Add extra information, such as a brief explanation, to the plot","Change the dataset's index","Convert the plot into a table"],"a":1},{"c":"Data Visualization with Python","q":"Which of the following best summarizes good data visualization practice, as per the chapter?","o":["Maximizing clutter to show more detail","Using clear labeling, minimizing clutter, and selecting the right type of display","Avoiding the use of colors entirely","Always using 3D charts regardless of data"],"a":1}];
+
+const CHAPTERS = [...new Set(ALL_QUESTIONS.map(q=>q.c))];
+
+let state = {
+  pool: [],
+  order: [],
+  current: 0,
+  answers: {},
+  timedMode: false,
+  instantFeedback: true,
+  timerInterval: null,
+  timeLeft: 0,
+  startTime: null,
+  submitted: false
+};
+
+function $(id){return document.getElementById(id);}
+
+function buildChapterGrid(){
+  const grid = $('chapterGrid');
+  grid.innerHTML = '';
+  CHAPTERS.forEach(ch=>{
+    const count = ALL_QUESTIONS.filter(q=>q.c===ch).length;
+    const div = document.createElement('label');
+    div.className = 'chapter-opt selected';
+    div.innerHTML = `<input type="checkbox" value="${ch}" checked>
+      <div class="meta"><span class="name">${ch}</span><span class="count">${count} questions</span></div>`;
+    div.querySelector('input').addEventListener('change', (e)=>{
+      div.classList.toggle('selected', e.target.checked);
+      refreshCountOptions();
+    });
+    grid.appendChild(div);
+  });
+}
+
+function getSelectedChapters(){
+  return [...document.querySelectorAll('#chapterGrid input:checked')].map(i=>i.value);
+}
+
+function refreshCountOptions(){
+  const chapters = getSelectedChapters();
+  const available = ALL_QUESTIONS.filter(q=>chapters.includes(q.c)).length;
+  const sel = $('qCount');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const options = [10,20,25,50,100].filter(n=>n<available);
+  options.push(available);
+  [...new Set(options)].sort((a,b)=>a-b).forEach(n=>{
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n===available ? `All (${n})` : n;
+    sel.appendChild(opt);
+  });
+  if(prev && [...sel.options].some(o=>o.value===prev)){
+    sel.value = prev;
+  } else {
+    sel.value = available; // default to "All"
+  }
+  $('startWarn').textContent = available===0 ? 'Select at least one chapter to continue.' : '';
+  $('beginBtn').disabled = available===0;
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function startTest(){
+  const chapters = getSelectedChapters();
+  let pool = ALL_QUESTIONS.filter(q=>chapters.includes(q.c));
+  const orderMode = $('order').value;
+  if(orderMode==='shuffle') pool = shuffle(pool);
+  const count = parseInt($('qCount').value,10);
+  pool = pool.slice(0, count);
+
+  state.pool = pool;
+  state.current = 0;
+  state.answers = {};
+  state.timedMode = $('timedMode').checked;
+  state.instantFeedback = $('instantFeedback').checked;
+  state.submitted = false;
+  state.startTime = Date.now();
+
+  $('statTotal').textContent = pool.length;
+  buildPalette();
+  showScreen('quiz');
+  renderQuestion();
+
+  if(state.timedMode){
+    $('timerWrap').style.display = 'inline';
+    state.timeLeft = pool.length * 60;
+    tickTimer();
+    state.timerInterval = setInterval(tickTimer, 1000);
+  } else {
+    $('timerWrap').style.display = 'none';
+    if(state.timerInterval) clearInterval(state.timerInterval);
+  }
+}
+
+function tickTimer(){
+  const m = Math.floor(state.timeLeft/60).toString().padStart(2,'0');
+  const s = (state.timeLeft%60).toString().padStart(2,'0');
+  $('timerVal').textContent = `${m}:${s}`;
+  $('timerVal').classList.toggle('low', state.timeLeft <= 60);
+  if(state.timeLeft<=0){
+    clearInterval(state.timerInterval);
+    submitTest();
+    return;
+  }
+  state.timeLeft--;
+}
+
+function buildPalette(){
+  const grid = $('paletteGrid');
+  grid.innerHTML = '';
+  state.pool.forEach((q,i)=>{
+    const btn = document.createElement('div');
+    btn.className = 'p-item';
+    btn.textContent = i+1;
+    btn.addEventListener('click', ()=>{ state.current = i; renderQuestion(); });
+    grid.appendChild(btn);
+  });
+}
+
+function refreshPalette(){
+  const items = $('paletteGrid').children;
+  for(let i=0;i<items.length;i++){
+    items[i].classList.toggle('answered', state.answers[i]!==undefined);
+    items[i].classList.toggle('current', i===state.current);
+  }
+}
+
+function renderQuestion(){
+  const i = state.current;
+  const q = state.pool[i];
+  $('statCurrent').textContent = i+1;
+  $('statAnswered').textContent = Object.keys(state.answers).length;
+  $('progressFill').style.width = ((i+1)/state.pool.length*100)+'%';
+  $('qChapterTag').textContent = q.c;
+  $('qNumLabel').textContent = (i+1)+'.';
+  $('qTextLabel').textContent = q.q;
+
+  const wrap = $('optionsWrap');
+  wrap.innerHTML = '';
+  const picked = state.answers[i];
+  const revealed = state.instantFeedback && picked!==undefined;
+
+  q.o.forEach((optText, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'option';
+    if(picked===idx) div.classList.add('picked');
+    if(revealed){
+      div.classList.add('disabled');
+      if(idx===q.a) div.classList.add('correct');
+      else if(idx===picked) div.classList.add('incorrect');
+    }
+    div.innerHTML = `<span class="bubble">${String.fromCharCode(97+idx)}</span><span>${optText}</span>`;
+    div.addEventListener('click', ()=>{
+      if(state.instantFeedback && state.answers[i]!==undefined) return; // locked after reveal
+      state.answers[i] = idx;
+      renderQuestion();
+      refreshPalette();
+    });
+    wrap.appendChild(div);
+  });
+
+  $('prevBtn').disabled = i===0;
+  const isLast = i===state.pool.length-1;
+  $('nextBtn').style.display = isLast ? 'none' : 'inline-block';
+  $('submitBtn').style.display = isLast ? 'inline-block' : 'none';
+
+  refreshPalette();
+}
+
+function showScreen(name){
+  ['start','quiz','results'].forEach(s=>{
+    $('screen-'+s).classList.toggle('active', s===name);
+  });
+}
+
+function submitTest(){
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  state.submitted = true;
+  renderResults();
+  showScreen('results');
+}
+
+function renderResults(){
+  const total = state.pool.length;
+  let correct = 0, wrong = 0, unanswered = 0;
+  const perChapter = {};
+
+  state.pool.forEach((q,i)=>{
+    perChapter[q.c] = perChapter[q.c] || {correct:0,total:0};
+    perChapter[q.c].total++;
+    const picked = state.answers[i];
+    if(picked===undefined){ unanswered++; }
+    else if(picked===q.a){ correct++; perChapter[q.c].correct++; }
+    else { wrong++; }
+  });
+
+  const pct = total? Math.round(correct/total*100):0;
+  $('scoreRing').style.setProperty('--pct', pct);
+  $('scorePct').textContent = pct+'%';
+  $('scoreHeadline').textContent = pct>=80 ? 'Excellent work' : pct>=50 ? 'Solid attempt' : 'Keep practising';
+  $('scoreLine1').textContent = `You scored ${correct} / ${total} — ${wrong} incorrect, ${unanswered} unanswered`;
+  const elapsed = Math.round((Date.now()-state.startTime)/1000);
+  const m = Math.floor(elapsed/60), s = elapsed%60;
+  $('scoreLine2').textContent = `Time taken: ${m}m ${s}s`;
+
+  const cb = $('chapterBreakdown');
+  cb.innerHTML = `<div class="cb-row head"><span>Chapter</span><span>Score</span><span>Accuracy</span></div>`;
+  Object.entries(perChapter).forEach(([ch,v])=>{
+    const p = v.total? Math.round(v.correct/v.total*100):0;
+    const row = document.createElement('div');
+    row.className = 'cb-row';
+    row.innerHTML = `<span>${ch}</span><span>${v.correct}/${v.total}</span>
+      <span class="cb-bar-track"><span class="cb-bar-fill" style="width:${p}%;"></span></span>`;
+    cb.appendChild(row);
+  });
+
+  renderReview('all');
+}
+
+function renderReview(filter){
+  const wrap = $('reviewWrap');
+  wrap.innerHTML = '';
+  state.pool.forEach((q,i)=>{
+    const picked = state.answers[i];
+    const isCorrect = picked===q.a;
+    const isUnanswered = picked===undefined;
+    if(filter==='wrong' && (isCorrect||isUnanswered)) return;
+    if(filter==='unanswered' && !isUnanswered) return;
+
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let lines = '';
+    if(isUnanswered){
+      lines += `<div class="review-line"><span class="tag">Your Answer</span> Not answered</div>`;
+    } else if(!isCorrect){
+      lines += `<div class="review-line your-wrong"><span class="tag">Your Answer</span> ${String.fromCharCode(97+picked)}) ${q.o[picked]}</div>`;
+    }
+    lines += `<div class="review-line correct-ans"><span class="tag">Correct</span> ${String.fromCharCode(97+q.a)}) ${q.o[q.a]}</div>`;
+
+    div.innerHTML = `<span class="q-chapter-tag">${q.c}</span>
+      <p class="q-text">${i+1}. ${q.q}</p>${lines}`;
+    wrap.appendChild(div);
+  });
+  if(!wrap.children.length){
+    wrap.innerHTML = '<p style="color:var(--ink-soft);font-size:14px;">Nothing to show for this filter.</p>';
+  }
+}
+
+// ---------- EVENTS ----------
+document.addEventListener('DOMContentLoaded', ()=>{
+  buildChapterGrid();
+  refreshCountOptions();
+
+  $('beginBtn').addEventListener('click', startTest);
+  $('prevBtn').addEventListener('click', ()=>{ state.current--; renderQuestion(); });
+  $('nextBtn').addEventListener('click', ()=>{ state.current++; renderQuestion(); });
+  $('clearBtn').addEventListener('click', ()=>{ delete state.answers[state.current]; renderQuestion(); refreshPalette(); });
+  $('submitBtn').addEventListener('click', submitTest);
+  $('paletteSubmitBtn').addEventListener('click', submitTest);
+  $('retakeBtn').addEventListener('click', ()=>{ showScreen('start'); });
+
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderReview(btn.dataset.filter);
+    });
+  });
+});
+</script>
+</body>
+</html>
